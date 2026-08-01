@@ -6,6 +6,7 @@ Repositorio que centraliza los módulos de [OCA (Odoo Community Association)](ht
 
 | Módulo | Repositorio OCA | Rama | Commit |
 |--------|-----------------|------|--------|
+| `account-reconcile` | [OCA/account-reconcile](https://github.com/OCA/account-reconcile) | `17.0` | `61172f2` |
 | `commission` | [OCA/commission](https://github.com/OCA/commission) | `17.0` | `5feb0df` |
 | `helpdesk` | [OCA/helpdesk](https://github.com/OCA/helpdesk) | `17.0` | `0d5b353` |
 | `project` | [OCA/project](https://github.com/OCA/project) | `17.0` | `b8924d0` |
