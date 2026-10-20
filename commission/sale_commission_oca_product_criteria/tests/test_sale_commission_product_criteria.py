@@ -216,3 +216,67 @@ class TestSaleCommission(TestSaleCommission):
         with self.assertRaises(ValidationError):
             self.rules_commission_id.commission_type = "fixed"
             self.rules_commission_id.onchange_commission_type()
+
+    def test_invoice_cogs_commission_total(self):
+        self.com_item_1.write({"applied_on": "3_global"})
+        self.com_item_4.write({"applied_on": "0_product_variant"})
+        invoice = self.env["account.move"].create(
+            {
+                "move_type": "out_invoice",
+                "partner_id": self.partner_rules.id,
+                "invoice_line_ids": [
+                    Command.create(
+                        {
+                            "name": self.product_1.name,
+                            "product_id": self.product_1.id,
+                            "quantity": 1.0,
+                            "price_unit": 1000.0,
+                        }
+                    ),
+                    Command.create(
+                        {
+                            "name": self.product_4.name,
+                            "product_id": self.product_4.id,
+                            "quantity": 1.0,
+                            "price_unit": 1000.0,
+                        }
+                    ),
+                ],
+            }
+        )
+        invoice.recompute_lines_agents()
+        self.assertEqual(invoice.commission_total, 160.0)
+        expense_account = invoice.invoice_line_ids[0].account_id
+        # Simulate COGS lines created on Anglo-Saxon posting
+        cogs_lines = self.env["account.move.line"].create(
+            [
+                {
+                    "move_id": invoice.id,
+                    "name": self.product_1.name,
+                    "product_id": self.product_1.id,
+                    "quantity": 1.0,
+                    "price_unit": 50.0,
+                    "debit": 50.0,
+                    "credit": 0.0,
+                    "account_id": expense_account.id,
+                    "display_type": "cogs",
+                },
+                {
+                    "move_id": invoice.id,
+                    "name": self.product_1.name,
+                    "product_id": self.product_1.id,
+                    "quantity": 1.0,
+                    "price_unit": -50.0,
+                    "debit": 0.0,
+                    "credit": 50.0,
+                    "account_id": expense_account.id,
+                    "display_type": "cogs",
+                },
+            ]
+        )
+        for cogs_line in cogs_lines:
+            self.assertEqual(len(cogs_line.agent_ids), 0)
+        self.assertEqual(invoice.commission_total, 160.0)
+        invoice.action_post()
+        self.assertEqual(invoice.commission_total, 160.0)
+
